@@ -101,19 +101,21 @@ async function saveData() {
       body: JSON.stringify(products)
     });
 
-    if (res.ok) {
+    if (res.status === 200) {
       showAdminToast("✅ Boutique mise à jour automatiquement !");
-    } else {
-      const err = await res.text();
-      throw new Error(err);
+      return;
     }
+
+    const err = await res.text().catch(() => "Erreur serveur");
+    throw new Error(err);
+
   } catch (e) {
     console.error("save-products error:", e);
-    // Fallback : télécharger products.json manuellement
-    showAdminToast("⚠️ Sync auto échoué — télécharge products.json et remplace-le dans le projet.");
-    exportProductsJSON();
+    // D'après la demande : ne pas télécharger automatiquement.
+    showAdminToast("⚠️ Sync auto échoué, réessaye");
   }
 }
+
 
 /* ===== NAVIGATION ===== */
 function showSection(name) {
@@ -545,7 +547,7 @@ function deleteProduct(id) {
   showAdminToast("🗑 Produit supprimé.");
 }
 
-/* ===== EXPORT MANUEL (fallback si Netlify Function indisponible) ===== */
+/* ===== EXPORT MANUEL ===== */
 function exportProductsJSON() {
   const data = JSON.stringify(products, null, 2);
   const blob = new Blob([data], { type: "application/json" });
@@ -557,7 +559,9 @@ function exportProductsJSON() {
   URL.revokeObjectURL(url);
 }
 
+
 /* ===== UTILITAIRES ===== */
+
 function fmt(n) {
   return (n || 0).toLocaleString("fr-FR") + " FCFA";
 }
